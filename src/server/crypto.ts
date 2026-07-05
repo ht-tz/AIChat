@@ -4,20 +4,19 @@
 
 import crypto from "crypto";
 
-const ENCRYPTION_KEY =
-  process.env.ENCRYPTION_KEY ||
-  process.env.JWT_SECRET ||
-  (process.env.NODE_ENV === "production"
-    ? (() => {
-        throw new Error("ENCRYPTION_KEY or JWT_SECRET must be set in production");
-      })()
-    : "dev-encryption-key-change-in-production-32ch");
+function getEncryptionKey(): string {
+  const key = process.env.ENCRYPTION_KEY || process.env.JWT_SECRET;
+  if (!key && process.env.NODE_ENV === "production") {
+    throw new Error("ENCRYPTION_KEY or JWT_SECRET must be set in production");
+  }
+  return key || "dev-encryption-key-change-in-production-32ch";
+}
 
 // P2 优化：缓存 SHA-256 哈希结果，避免每次加密/解密都重新计算
 let cachedKey: Buffer | null = null;
 function getKey(): Buffer {
   if (cachedKey) return cachedKey;
-  cachedKey = crypto.createHash("sha256").update(ENCRYPTION_KEY).digest();
+  cachedKey = crypto.createHash("sha256").update(getEncryptionKey()).digest();
   return cachedKey;
 }
 

@@ -13,13 +13,13 @@ import {
   type EmailVerificationToken,
 } from "@/server/db";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  (process.env.NODE_ENV === "production"
-    ? (() => {
-        throw new Error("JWT_SECRET must be set in production");
-      })()
-    : "dev-secret-change-in-production");
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret && process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET must be set in production");
+  }
+  return secret || "dev-secret-change-in-production";
+}
 const JWT_EXPIRES_IN = "7d";
 
 // 登录失败次数跟踪（IP+邮箱 → 失败次数和锁定时间）
@@ -503,12 +503,12 @@ export class AuthService {
       email: user.email,
       role: user.role,
     };
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    return jwt.sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
   }
 
   verifyToken(token: string): TokenPayload | null {
     try {
-      return jwt.verify(token, JWT_SECRET) as TokenPayload;
+      return jwt.verify(token, getJwtSecret()) as TokenPayload;
     } catch {
       return null;
     }

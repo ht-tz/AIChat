@@ -39,4 +39,5 @@ jobs:
         run: pnpm build
         env:
           DATABASE_URL: ""
+          JWT_SECRET: "ci-jwt-secret-for-build-only"
           ENCRYPTION_KEY: "ci-test-key-32-characters-long!"
