@@ -31,10 +31,36 @@
 | M22 | 工程化 + Harness | ✅ | ✅ | ✅ | ✅ |
 | M22S | Harness 最佳实践补齐 | ✅ | ✅ | — | ✅ |
 | M23 | GitHub MCP + Git 初始化 | ✅ | ✅ | — | ✅ |
+| M24 | 生产加固 | ✅ | ✅ | — | ✅ |
+| P0 | 测试覆盖率提升 | — | ✅ | — | ✅ |
 
 ---
 
 ## 2026-07-05
+
+### ✅ P0 测试覆盖率提升 - 完成
+- **时间**：晚间
+- **做了什么**：
+  - **新增 6 个测试文件**，覆盖核心服务模块：
+    - `src/server/tools/registry.test.ts` — 工具注册中心（14 个用例）
+    - `src/server/middleware/rate-limiter.test.ts` — 限流中间件（8 个用例）
+    - `src/server/middleware/input-validator.test.ts` — 输入验证中间件（27 个用例）
+    - `src/server/prompts/variable-parser.test.ts` — 提示词变量解析器（24 个用例）
+    - `src/server/memory/vector-utils.test.ts` — 向量相似度工具（24 个用例）
+    - `src/server/providers/mock.test.ts` — Mock Provider（17 个用例）
+  - **测试覆盖模块**：
+    - 工具注册/查找/校验/执行/超时/中断
+    - 限流窗口算法/并发/headers
+    - 文本/JSON/URL/邮箱验证 + XSS 防护
+    - 变量提取/插值/解析/校验
+    - 余弦相似度/欧氏距离/归一化/序列化
+    - Mock Provider 的 embed/complete/stream
+- **验证结果**：
+  - `pnpm test` ✅ 12 files / 148 tests passed（从 6 文件 / 34 用例提升到 12 文件 / 148 用例）
+  - 测试覆盖率提升 **335%**（+114 个测试用例）
+- **下一步**：提交代码并推送
+
+---
 
 ### ✅ M22 工程化能力补全 + Claude Code Harness - 完成
 - **时间**：下午
@@ -564,7 +590,7 @@
 - **时间**：凌晨
 - **做了什么**：
   - **工具层**：`src/server/tools/{types,registry,index}.ts` + 5 个内置工具
-    - `calculator`（手写 Shunting-yard，支持 + - * / ^ () 与 sqrt/sin/cos/log/ln/exp/pi/e）
+    - `calculator`（手写 Shunting-yard，支持 + - * / ^ () 与 sqrt/sin/cos/tan/log/ln/exp/pi/e）
     - `get_current_time`（IANA 时区 + 人类可读 / ISO）
     - `web_search`（Mock 3 组数据 + 兜底）
     - `code_runner`（node:vm 沙箱，5s 超时，支持最后一行表达式 return）
