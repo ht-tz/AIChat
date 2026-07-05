@@ -1,0 +1,18 @@
+node_modules
+.next
+.turbo
+dist
+out
+.env
+.env.local
+.DS_Store
+public/uploads/*
+!public/uploads/.gitkeep
+drizzle/meta
+*.log
+
+# Claude Code 个人配置（不提交）
+CLAUDE.local.md
+
+# Harness.io 配置（误创建，已弃用）
+.harness/

@@ -1,0 +1,68 @@
+{
+  "permissions": {
+    "deny": [
+      "rm -rf",
+      "rm -rf /*",
+      "DROP TABLE",
+      "DROP DATABASE",
+      "TRUNCATE",
+      "DELETE FROM users",
+      "DELETE FROM sessions",
+      "DELETE FROM messages"
+    ],
+    "allow": [
+      "pnpm dev",
+      "pnpm build",
+      "pnpm test",
+      "pnpm test:watch",
+      "pnpm lint",
+      "pnpm lint:fix",
+      "pnpm typecheck",
+      "pnpm format",
+      "pnpm format:check",
+      "pnpm db:push",
+      "pnpm db:generate",
+      "pnpm db:studio",
+      "pnpm analyze",
+      "pnpm lint:unused",
+      "git status",
+      "git diff",
+      "git log",
+      "git add",
+      "git commit",
+      "git branch",
+      "git checkout",
+      "git stash",
+      "psql *",
+      "curl *",
+      "lsof *",
+      "mkdir *",
+      "gh *"
+    ]
+  },
+  "hooks": {
+    "postToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pnpm typecheck 2>&1 | tail -5",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pnpm typecheck 2>&1 | tail -5 && pnpm test 2>&1 | tail -10",
+            "timeout": 60000
+          }
+        ]
+      }
+    ]
+  }
+}

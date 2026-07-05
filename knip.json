@@ -1,0 +1,16 @@
+{
+  "entry": [
+    "src/app/**/*.tsx",
+    "src/app/**/*.ts"
+  ],
+  "project": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "ignore": [
+    "src/__tests__/**"
+  ],
+  "ignoreDependencies": [
+    "@vitest/coverage-v8"
+  ]
+}
