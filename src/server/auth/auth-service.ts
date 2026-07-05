@@ -13,8 +13,19 @@ import {
   type EmailVerificationToken,
 } from "@/server/db";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-in-production";
+const JWT_SECRET =
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === "production"
+    ? (() => {
+        throw new Error("JWT_SECRET must be set in production");
+      })()
+    : "dev-secret-change-in-production");
 const JWT_EXPIRES_IN = "7d";
+
+// 登录失败次数跟踪（IP+邮箱 → 失败次数和锁定时间）
+const loginAttempts: Map<string, { count: number; lockedUntil: number }> = new Map();
+const MAX_LOGIN_ATTEMPTS = 10;
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 分钟
 
 export interface RegisterInput {
   email: string;
@@ -123,10 +134,19 @@ export class AuthService {
     };
   }
 
-  async login(input: LoginInput): Promise<AuthResult> {
+  async login(input: LoginInput, clientIp?: string): Promise<AuthResult> {
     const email = input.email.toLowerCase().trim();
+    const identifier = clientIp ? `${clientIp}:${email}` : email;
+
+    // 检查账户锁定
+    const lock = this.checkLoginLock(identifier);
+    if (lock.locked) {
+      throw new Error(`登录尝试过多，请 ${lock.retryAfter} 秒后再试`);
+    }
+
     const user = await this.findUserByEmail(email);
     if (!user) {
+      this.recordLoginFailure(identifier);
       throw new Error("Invalid email or password");
     }
     if (!user.passwordHash) {
@@ -135,15 +155,45 @@ export class AuthService {
 
     const valid = await bcrypt.compare(input.password, user.passwordHash);
     if (!valid) {
+      this.recordLoginFailure(identifier);
       throw new Error("Invalid email or password");
     }
 
+    // 登录成功，清除失败记录
+    this.clearLoginAttempts(identifier);
     await this.updateLastLogin(user.id);
     const token = this.generateToken(user);
     return {
       user: this.sanitizeUser(user),
       token,
     };
+  }
+
+  checkLoginLock(identifier: string): { locked: boolean; retryAfter?: number } {
+    const attempt = loginAttempts.get(identifier);
+    if (!attempt) return { locked: false };
+    if (attempt.lockedUntil > 0 && Date.now() < attempt.lockedUntil) {
+      return { locked: true, retryAfter: Math.ceil((attempt.lockedUntil - Date.now()) / 1000) };
+    }
+    // 锁定已过期，重置
+    if (attempt.lockedUntil > 0 && Date.now() >= attempt.lockedUntil) {
+      loginAttempts.delete(identifier);
+      return { locked: false };
+    }
+    return { locked: false };
+  }
+
+  recordLoginFailure(identifier: string): void {
+    const attempt = loginAttempts.get(identifier) || { count: 0, lockedUntil: 0 };
+    attempt.count++;
+    if (attempt.count >= MAX_LOGIN_ATTEMPTS) {
+      attempt.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+    }
+    loginAttempts.set(identifier, attempt);
+  }
+
+  clearLoginAttempts(identifier: string): void {
+    loginAttempts.delete(identifier);
   }
 
   /**

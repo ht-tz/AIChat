@@ -55,8 +55,10 @@
 - .claude/agents/ 子智能体（code-reviewer/test-writer）
 
 **MiMo 模型接入**：
-- 添加 MiMo V2.5 Coding Plan 模型
+- 添加 MiMo V2.5 Coding Plan 模型到 settings.ts 模型列表
 - 更新 Coding Plan 专属 URL（token-plan-cn.xiaomimimo.com/v1）
+- 代码变更：`src/server/providers/index.ts` baseUrl 更新
+- 数据库变更：`model_configs` 表 baseUrl 更新为专属 URL（已有记录的 UPDATE）
 
 ### 3.2 不包含（Out of Scope）
 

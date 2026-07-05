@@ -1,5 +1,6 @@
 // 认证中间件 —— 验证 JWT 或 API Key
 
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { authService, type TokenPayload } from "./auth-service";
 
@@ -47,6 +48,22 @@ export async function authenticateRequest(req: NextRequest): Promise<AuthContext
   return null;
 }
 
+// CSRF 双提交 Cookie 模式
+export function generateCsrfToken(): string {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+export function validateCsrfToken(req: NextRequest): boolean {
+  // 仅对 state-changing 方法检查
+  if (["GET", "HEAD", "OPTIONS"].includes(req.method)) return true;
+
+  const cookieToken = req.cookies.get("csrf-token")?.value;
+  const headerToken = req.headers.get("x-csrf-token");
+
+  if (!cookieToken || !headerToken) return false;
+  return cookieToken === headerToken;
+}
+
 export function requireAuth(
   handler: (req: NextRequest, ctx: AuthContext) => Promise<NextResponse> | NextResponse,
 ) {
@@ -55,6 +72,17 @@ export function requireAuth(
     if (!ctx) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // CSRF 校验（Cookie 认证时）
+    if (["POST", "PUT", "DELETE", "PATCH"].includes(req.method)) {
+      const cookieToken = req.cookies.get("csrf-token")?.value;
+      const headerToken = req.headers.get("x-csrf-token");
+      // 仅当客户端携带了 CSRF cookie 时才校验（渐进式启用）
+      if (cookieToken && cookieToken !== headerToken) {
+        return NextResponse.json({ error: "CSRF token mismatch" }, { status: 403 });
+      }
+    }
+
     return handler(req, ctx);
   };
 }

@@ -1,6 +1,7 @@
 // 多智能体协作状态管理
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface MaStep {
   id: string;
@@ -72,108 +73,11 @@ interface MaState {
   reset: () => void;
 }
 
-export const useMaStore = create<MaState>((set, get) => ({
-  runId: null,
-  goal: "",
-  status: "idle",
-  stages: [],
-  steps: [],
-  currentStageIndex: 0,
-  totalStages: 0,
-  totalSteps: 0,
-  completedSteps: 0,
-  finalAnswer: "",
-  error: null,
-  durationMs: 0,
-  startedAt: null,
-  teams: [],
-  selectedTeamId: "research-analysis",
-  isLoadingTeams: true,
-
-  setGoal: (goal) => set({ goal }),
-  setSelectedTeamId: (id) => set({ selectedTeamId: id }),
-  setTeams: (teams) => set({ teams, isLoadingTeams: false }),
-
-  initRun: (runId, stages, totalStages, totalSteps) => {
-    const steps: MaStep[] = [];
-    stages.forEach((stage, sIdx) => {
-      stage.tasks.forEach((task, tIdx) => {
-        steps.push({
-          id: `${sIdx}-${tIdx}`,
-          stageIndex: sIdx,
-          stepIndex: tIdx,
-          agentRole: task.assignee,
-          agentName: task.assignee,
-          status: "pending",
-          input: task.description,
-          output: "",
-        });
-      });
-    });
-
-    set({
-      runId,
-      status: "running",
-      stages,
-      steps,
-      totalStages,
-      totalSteps,
-      completedSteps: 0,
-      currentStageIndex: 0,
-      startedAt: Date.now(),
-      error: null,
-      finalAnswer: "",
-    });
-  },
-
-  setStageStarted: (stageIndex) => set({ currentStageIndex: stageIndex }),
-
-  setAgentStarted: (stepId) =>
-    set((state) => ({
-      steps: state.steps.map((s) =>
-        s.id === stepId ? { ...s, status: "running", startedAt: Date.now() } : s,
-      ),
-    })),
-
-  setAgentDelta: (stepId, delta) =>
-    set((state) => ({
-      steps: state.steps.map((s) => (s.id === stepId ? { ...s, output: s.output + delta } : s)),
-    })),
-
-  setAgentCompleted: (stepId, status, output, error, durationMs) =>
-    set((state) => ({
-      steps: state.steps.map((s) =>
-        s.id === stepId
-          ? {
-              ...s,
-              status,
-              output: output ?? s.output,
-              error,
-              completedAt: Date.now(),
-              durationMs,
-            }
-          : s,
-      ),
-      completedSteps: status === "completed" ? state.completedSteps + 1 : state.completedSteps,
-    })),
-
-  setStageCompleted: () =>
-    set((state) => ({
-      currentStageIndex: state.currentStageIndex + 1,
-    })),
-
-  setRunCompleted: (finalAnswer, durationMs) =>
-    set({
-      status: "completed",
-      finalAnswer,
-      durationMs,
-    }),
-
-  setRunFailed: (error) => set({ status: "failed", error }),
-
-  reset: () =>
-    set({
+export const useMaStore = create<MaState>()(
+  persist(
+    (set, get) => ({
       runId: null,
+      goal: "",
       status: "idle",
       stages: [],
       steps: [],
@@ -185,5 +89,113 @@ export const useMaStore = create<MaState>((set, get) => ({
       error: null,
       durationMs: 0,
       startedAt: null,
+      teams: [],
+      selectedTeamId: "research-analysis",
+      isLoadingTeams: true,
+
+      setGoal: (goal) => set({ goal }),
+      setSelectedTeamId: (id) => set({ selectedTeamId: id }),
+      setTeams: (teams) => set({ teams, isLoadingTeams: false }),
+
+      initRun: (runId, stages, totalStages, totalSteps) => {
+        const steps: MaStep[] = [];
+        stages.forEach((stage, sIdx) => {
+          stage.tasks.forEach((task, tIdx) => {
+            steps.push({
+              id: `${sIdx}-${tIdx}`,
+              stageIndex: sIdx,
+              stepIndex: tIdx,
+              agentRole: task.assignee,
+              agentName: task.assignee,
+              status: "pending",
+              input: task.description,
+              output: "",
+            });
+          });
+        });
+
+        set({
+          runId,
+          status: "running",
+          stages,
+          steps,
+          totalStages,
+          totalSteps,
+          completedSteps: 0,
+          currentStageIndex: 0,
+          startedAt: Date.now(),
+          error: null,
+          finalAnswer: "",
+        });
+      },
+
+      setStageStarted: (stageIndex) => set({ currentStageIndex: stageIndex }),
+
+      setAgentStarted: (stepId) =>
+        set((state) => ({
+          steps: state.steps.map((s) =>
+            s.id === stepId ? { ...s, status: "running", startedAt: Date.now() } : s,
+          ),
+        })),
+
+      setAgentDelta: (stepId, delta) =>
+        set((state) => ({
+          steps: state.steps.map((s) => (s.id === stepId ? { ...s, output: s.output + delta } : s)),
+        })),
+
+      setAgentCompleted: (stepId, status, output, error, durationMs) =>
+        set((state) => ({
+          steps: state.steps.map((s) =>
+            s.id === stepId
+              ? {
+                  ...s,
+                  status,
+                  output: output ?? s.output,
+                  error,
+                  completedAt: Date.now(),
+                  durationMs,
+                }
+              : s,
+          ),
+          completedSteps: status === "completed" ? state.completedSteps + 1 : state.completedSteps,
+        })),
+
+      setStageCompleted: () =>
+        set((state) => ({
+          currentStageIndex: state.currentStageIndex + 1,
+        })),
+
+      setRunCompleted: (finalAnswer, durationMs) =>
+        set({
+          status: "completed",
+          finalAnswer,
+          durationMs,
+        }),
+
+      setRunFailed: (error) => set({ status: "failed", error }),
+
+      reset: () =>
+        set({
+          runId: null,
+          status: "idle",
+          stages: [],
+          steps: [],
+          currentStageIndex: 0,
+          totalStages: 0,
+          totalSteps: 0,
+          completedSteps: 0,
+          finalAnswer: "",
+          error: null,
+          durationMs: 0,
+          startedAt: null,
+        }),
     }),
-}));
+    {
+      name: "nexus-ma-store",
+      partialize: (state) => ({
+        teams: state.teams,
+        selectedTeamId: state.selectedTeamId,
+      }),
+    },
+  ),
+);

@@ -91,7 +91,7 @@ export class OpenAIProvider implements LLMProvider {
     }>,
   ) {
     return messages.map((m) => ({
-      role: m.role as any,
+      role: m.role as "system" | "user" | "assistant" | "function" | "tool",
       content: m.content,
       ...(m.name ? { name: m.name } : {}),
       ...(m.toolCallId ? { tool_call_id: m.toolCallId } : {}),
@@ -145,21 +145,24 @@ export class OpenAIProvider implements LLMProvider {
       const stream = await this.client.chat.completions.create(
         {
           model,
-          messages: this.toChatMessages(opts.messages) as any,
-          tools: tools as any,
+          messages: this.toChatMessages(opts.messages) as OpenAI.ChatCompletionMessageParam[],
+          tools: tools as OpenAI.ChatCompletionTool[],
           temperature: opts.temperature ?? 0.7,
           stream: true,
+          // vendor-specific params not in OpenAI SDK types
           ...extra,
-        } as any,
+        } as OpenAI.ChatCompletionCreateParams,
         { signal: opts.signal },
       );
 
-      for await (const chunk of stream as any) {
+      for await (const chunk of stream as AsyncIterable<OpenAI.ChatCompletionChunk>) {
         if (opts.signal?.aborted) return;
         const delta = chunk.choices?.[0]?.delta;
+        // vendor-specific extension (e.g. DeepSeek) not in OpenAI SDK types
+        const extendedDelta = delta as typeof delta & { reasoning_content?: string };
 
-        if (delta?.reasoning_content) {
-          yield { kind: "thought", content: delta.reasoning_content };
+        if (extendedDelta?.reasoning_content) {
+          yield { kind: "thought", content: extendedDelta.reasoning_content };
         }
 
         if (delta?.content) {
@@ -234,13 +237,14 @@ export class OpenAIProvider implements LLMProvider {
     jsonMode?: boolean;
   }): Promise<{ content: string; usage: { prompt: number; completion: number; total: number } }> {
     const model = opts.model && opts.model !== "mock-default" ? opts.model : this.defaultModel;
-    const res = await this.client.chat.completions.create({
+    // vendor-specific params (thinking, etc.) require `as any` on the full params object
+    const res = (await this.client.chat.completions.create({
       model,
-      messages: this.toChatMessages(opts.messages) as any,
+      messages: this.toChatMessages(opts.messages) as OpenAI.ChatCompletionMessageParam[],
       temperature: opts.temperature ?? 0.7,
       ...(opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
       ...(this.vendor === "xiaomimimo" ? { thinking: { type: "disabled" } } : {}),
-    } as any);
+    } as OpenAI.ChatCompletionCreateParams)) as OpenAI.ChatCompletion;
     const choice = res.choices[0];
     return {
       content: choice.message.content ?? "",

@@ -259,15 +259,19 @@ export class ModelConfigService {
       return;
     }
 
-    await db
-      .update(schema.modelConfigs)
-      .set({ isActive: false })
-      .where(eq(schema.modelConfigs.userId, userId));
+    await db.transaction(async (tx) => {
+      await tx
+        .update(schema.modelConfigs)
+        .set({ isActive: false })
+        .where(eq(schema.modelConfigs.userId, userId));
 
-    await db
-      .update(schema.modelConfigs)
-      .set({ isActive: true, updatedAt: new Date() })
-      .where(and(eq(schema.modelConfigs.userId, userId), eq(schema.modelConfigs.modelId, modelId)));
+      await tx
+        .update(schema.modelConfigs)
+        .set({ isActive: true, updatedAt: new Date() })
+        .where(
+          and(eq(schema.modelConfigs.userId, userId), eq(schema.modelConfigs.modelId, modelId)),
+        );
+    });
   }
 
   async deleteConfig(userId: string, modelId: string): Promise<boolean> {

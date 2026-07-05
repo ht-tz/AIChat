@@ -8,6 +8,7 @@ import {
   getEvaluationStats,
   clearEvaluations,
 } from "@/server/monitoring/evaluation";
+import { requireAuth } from "@/server/auth/auth-middleware";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,12 +24,12 @@ const RetrievalSchema = z.object({
   relevant: z.array(z.string()),
 });
 
-export async function GET() {
+export const GET = requireAuth(async (req, ctx) => {
   const stats = getEvaluationStats();
   return NextResponse.json(stats);
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = requireAuth(async (req, ctx) => {
   try {
     const raw = await req.json();
 
@@ -54,9 +55,9 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
-}
+});
 
-export async function DELETE() {
+export const DELETE = requireAuth(async (req, ctx) => {
   clearEvaluations();
   return NextResponse.json({ success: true, message: "Evaluation records cleared" });
-}
+});

@@ -1,0 +1,17 @@
+.git
+.github
+.env
+.env.*
+node_modules
+.next
+docs
+*.md
+!README.md
+.husky
+.claude
+.editorconfig
+.eslintrc.json
+.prettierrc
+.prettierignore
+fly.toml
+nginx.conf

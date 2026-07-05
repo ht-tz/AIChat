@@ -134,6 +134,7 @@ export class OAuthService {
       method: "POST",
       headers,
       body: new URLSearchParams(body).toString(),
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!res.ok) {
@@ -165,6 +166,7 @@ export class OAuthService {
         Authorization: `Bearer ${accessToken}`,
         Accept: "application/json",
       },
+      signal: AbortSignal.timeout(10000),
     });
     if (!userRes.ok) {
       throw new Error("Failed to fetch GitHub user info");
@@ -178,6 +180,7 @@ export class OAuthService {
         Authorization: `Bearer ${accessToken}`,
         Accept: "application/json",
       },
+      signal: AbortSignal.timeout(10000),
     });
     if (emailRes.ok) {
       const emails = (await emailRes.json()) as Array<{
@@ -202,6 +205,7 @@ export class OAuthService {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) {
       throw new Error("Failed to fetch Google user info");

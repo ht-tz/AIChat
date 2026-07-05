@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authService } from "@/server/auth";
+import { generateCsrfToken } from "@/server/auth/auth-middleware";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,16 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
+
+    const csrfToken = generateCsrfToken();
+    response.cookies.set("csrf-token", csrfToken, {
+      httpOnly: false, // 前端需要读取
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+
     return response;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

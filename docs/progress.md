@@ -29,6 +29,8 @@
 | M20 | 对比学习文档 | ✅ | ✅ | ✅ | ✅ |
 | M21 | 性能优化 | ✅ | ✅ | ✅ | ✅ |
 | M22 | 工程化 + Harness | ✅ | ✅ | ✅ | ✅ |
+| M22S | Harness 最佳实践补齐 | ✅ | ✅ | — | ✅ |
+| M23 | GitHub MCP + Git 初始化 | ✅ | ✅ | — | ✅ |
 
 ---
 
@@ -61,6 +63,35 @@
 - **学习文档**：`docs/learning/M22-engineering-harness.md`
 - **需求文档**：`docs/requirements/M22-engineering-harness.md`
 
+
+### ✅ M22 补充 — Claude Code Harness 最佳实践补齐（需求文档补录）
+- **时间**：下午
+- **需求文档**：`docs/requirements/M22-supplement-harness-best-practices.md`
+- **做了什么**：
+  - Claude Code Hooks（postToolUse + stop 门禁）
+  - CLAUDE.local.md 个人开发配置
+  - ~/.claude/CLAUDE.md 全局 Claude 配置
+  - Skills 模块（database/deployment/debugging）
+  - gh CLI 安装 + allow 白名单
+  - CLAUDE.md @path 引用优化
+
+### ✅ M23 GitHub MCP 集成 + Git 仓库初始化
+- **时间**：下午
+- **需求文档**：`docs/requirements/M23-github-mcp-git-init.md`
+- **做了什么**：
+  - GitHub MCP 服务器注册到 ~/.claude/settings.json（OAuth 认证）
+  - gh CLI auth login（账号 ht-tz）
+  - .gitignore 安全检查（.env.local / CLAUDE.local.md / .harness/ 已排除）
+  - 初始提交：268 文件 / 55,427 行代码
+  - GitHub 仓库创建：https://github.com/ht-tz/AIChat
+  - 推送到 origin/main
+- **验证结果**：
+  - gh auth status ✅ Logged in as ht-tz
+  - git remote -v ✅ https://github.com/ht-tz/AIChat.git
+  - .env.local ✅ 未跟踪
+  - GitHub 仓库 ✅ 可访问
+
+---
 ### ✅ M22 补充 — Claude Code Harness 最佳实践补齐
 - **时间**：下午
 - **做了什么**：

@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { memoryService } from "@/server/memory";
-import { optionalAuth } from "@/server/auth";
+import { requireAuth } from "@/server/auth/auth-middleware";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,8 +25,7 @@ const SearchSchema = z.object({
   limit: z.number().min(1).max(50).optional(),
 });
 
-export async function GET(req: NextRequest) {
-  const authCtx = await optionalAuth(req);
+export const GET = requireAuth(async (req, ctx) => {
   const searchParams = req.nextUrl.searchParams;
   const kind = searchParams.get("kind") as "short" | "long" | "episodic" | null;
   const status = searchParams.get("status") as "active" | "archived" | "forgotten" | null;
@@ -37,10 +36,9 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json({ memories });
-}
+});
 
-export async function POST(req: NextRequest) {
-  const authCtx = await optionalAuth(req);
+export const POST = requireAuth(async (req, ctx) => {
   let body: z.infer<typeof CreateSchema>;
   try {
     const raw = await req.json();
@@ -94,30 +92,55 @@ export async function POST(req: NextRequest) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-}
+});
 
-export async function PUT(req: NextRequest) {
-  const authCtx = await optionalAuth(req);
-  const { id, ...updates } = await req.json();
-  if (!id) {
-    return NextResponse.json({ error: "id is required" }, { status: 400 });
+const UpdateSchema = z.object({
+  id: z.string().min(1),
+  content: z.string().min(1).optional(),
+  summary: z.string().optional(),
+  topics: z.array(z.string()).optional(),
+  importance: z.number().min(0).max(100).optional(),
+  status: z.enum(["active", "archived", "forgotten"]).optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
+export const PUT = requireAuth(async (req, ctx) => {
+  let body: z.infer<typeof UpdateSchema>;
+  try {
+    const raw = await req.json();
+    body = UpdateSchema.parse(raw);
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Invalid request body", detail: String(err) },
+      { status: 400 },
+    );
   }
+  const { id, ...updates } = body;
   const result = await memoryService.update(id, updates);
   if (!result) {
     return NextResponse.json({ error: "Memory not found" }, { status: 404 });
   }
   return NextResponse.json(result);
-}
+});
 
-export async function DELETE(req: NextRequest) {
-  const authCtx = await optionalAuth(req);
-  const { id } = await req.json();
-  if (!id) {
-    return NextResponse.json({ error: "id is required" }, { status: 400 });
+const DeleteSchema = z.object({
+  id: z.string().min(1),
+});
+
+export const DELETE = requireAuth(async (req, ctx) => {
+  let body: z.infer<typeof DeleteSchema>;
+  try {
+    const raw = await req.json();
+    body = DeleteSchema.parse(raw);
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Invalid request body", detail: String(err) },
+      { status: 400 },
+    );
   }
-  const removed = memoryService.delete(id);
+  const removed = memoryService.delete(body.id);
   if (!removed) {
     return NextResponse.json({ error: "Memory not found" }, { status: 404 });
   }
   return NextResponse.json({ success: true });
-}
+});

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { documentService, ragService } from "@/server/knowledge";
 import { applyRateLimit, validateText } from "@/server/middleware";
 import { recordPerformance } from "@/server/monitoring/performance";
-import { optionalAuth } from "@/server/auth";
+import { requireAuth } from "@/server/auth/auth-middleware";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,9 +25,8 @@ const CreateSchema = z.object({
   content: z.string().min(1),
 });
 
-export async function GET(req: NextRequest) {
+export const GET = requireAuth(async (req, ctx) => {
   const startTime = Date.now();
-  const authCtx = await optionalAuth(req);
   const ip = getClientIp(req);
   const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/knowledge/documents");
   if (!allowed) {
@@ -40,11 +39,10 @@ export async function GET(req: NextRequest) {
   const stats = ragService.getStats();
   recordPerformance("/api/knowledge/documents", "GET", Date.now() - startTime, 200);
   return NextResponse.json({ documents, stats }, { headers: rateLimitHeaders });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = requireAuth(async (req, ctx) => {
   const startTime = Date.now();
-  const authCtx = await optionalAuth(req);
   const ip = getClientIp(req);
   const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/knowledge/documents");
   if (!allowed) {
@@ -102,11 +100,17 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json({ error: msg }, { status: 500, headers: rateLimitHeaders });
   }
-}
+});
 
-export async function PUT(req: NextRequest) {
+const UpdateDocSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).optional(),
+  content: z.string().min(1).optional(),
+  source: z.string().optional(),
+});
+
+export const PUT = requireAuth(async (req, ctx) => {
   const startTime = Date.now();
-  const authCtx = await optionalAuth(req);
   const ip = getClientIp(req);
   const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/knowledge/documents");
   if (!allowed) {
@@ -116,14 +120,18 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  const { id, ...updates } = await req.json();
-  if (!id) {
+  let body: z.infer<typeof UpdateDocSchema>;
+  try {
+    const raw = await req.json();
+    body = UpdateDocSchema.parse(raw);
+  } catch (err) {
     recordPerformance("/api/knowledge/documents", "PUT", Date.now() - startTime, 400);
     return NextResponse.json(
-      { error: "id is required" },
+      { error: "Invalid request body", detail: String(err) },
       { status: 400, headers: rateLimitHeaders },
     );
   }
+  const { id, ...updates } = body;
   const result = await documentService.updateDocument(id, updates);
   if (!result) {
     recordPerformance("/api/knowledge/documents", "PUT", Date.now() - startTime, 404);
@@ -136,11 +144,14 @@ export async function PUT(req: NextRequest) {
   await ragService.addDocumentToStore(id);
   recordPerformance("/api/knowledge/documents", "PUT", Date.now() - startTime, 200);
   return NextResponse.json(result, { headers: rateLimitHeaders });
-}
+});
 
-export async function DELETE(req: NextRequest) {
+const DeleteDocSchema = z.object({
+  id: z.string().min(1),
+});
+
+export const DELETE = requireAuth(async (req, ctx) => {
   const startTime = Date.now();
-  const authCtx = await optionalAuth(req);
   const ip = getClientIp(req);
   const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/knowledge/documents");
   if (!allowed) {
@@ -150,16 +161,19 @@ export async function DELETE(req: NextRequest) {
     );
   }
 
-  const { id } = await req.json();
-  if (!id) {
+  let body: z.infer<typeof DeleteDocSchema>;
+  try {
+    const raw = await req.json();
+    body = DeleteDocSchema.parse(raw);
+  } catch (err) {
     recordPerformance("/api/knowledge/documents", "DELETE", Date.now() - startTime, 400);
     return NextResponse.json(
-      { error: "id is required" },
+      { error: "Invalid request body", detail: String(err) },
       { status: 400, headers: rateLimitHeaders },
     );
   }
-  ragService.removeDocumentFromStore(id);
-  const removed = documentService.deleteDocument(id);
+  ragService.removeDocumentFromStore(body.id);
+  const removed = documentService.deleteDocument(body.id);
   if (!removed) {
     recordPerformance("/api/knowledge/documents", "DELETE", Date.now() - startTime, 404);
     return NextResponse.json(
@@ -169,4 +183,4 @@ export async function DELETE(req: NextRequest) {
   }
   recordPerformance("/api/knowledge/documents", "DELETE", Date.now() - startTime, 200);
   return NextResponse.json({ success: true }, { headers: rateLimitHeaders });
-}
+});

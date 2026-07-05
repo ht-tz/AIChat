@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(_req: NextRequest) {
   const runs = getAllRuns()
-    .sort((a, b) => b.createdAt - a.createdAt)
+    .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
     .slice(0, 50)
     .map((r) => ({
       id: r.id,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createProvider } from "@/server/providers";
+import { requireAuth } from "@/server/auth/auth-middleware";
 
 const TestSchema = z.object({
   modelId: z.string().min(1),
@@ -8,10 +9,29 @@ const TestSchema = z.object({
   apiKey: z.string().min(1),
 });
 
-export async function POST(req: NextRequest) {
+export const POST = requireAuth(async (req, _ctx) => {
   try {
     const body = await req.json();
     const { modelId, baseUrl, apiKey } = TestSchema.parse(body);
+
+    // SSRF 防护：只允许 http/https 协议，禁止内网地址
+    const url = new URL(baseUrl);
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return NextResponse.json({ ok: false, error: "仅支持 http/https 协议" }, { status: 400 });
+    }
+    const hostname = url.hostname;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("172.") ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal")
+    ) {
+      return NextResponse.json({ ok: false, error: "不允许访问内网地址" }, { status: 400 });
+    }
 
     const provider = createProvider({
       apiKey,
@@ -43,4 +63,4 @@ export async function POST(req: NextRequest) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ ok: false, error: msg }, { status: 400 });
   }
-}
+});
