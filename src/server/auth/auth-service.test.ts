@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 describe("AuthService 纯函数测试", () => {
   describe("密码哈希", () => {
     it("bcrypt hash/compare 应正确工作", async () => {
-      const bcrypt = await import("bcrypt");
+      const bcrypt = await import("bcryptjs");
       const password = "testPassword123";
       const hash = await bcrypt.hash(password, 10);
 
