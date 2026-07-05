@@ -270,20 +270,20 @@ psql -d nexus -c "\dt agent_*"
 
 ```bash
 # 1. 创建团队
-curl -X POST http://localhost:3000/api/multi-agent/teams \
+curl -X POST http://localhost:8000/api/multi-agent/teams \
   -H "Content-Type: application/json" \
   -d '{"name":"测试团队","workflowConfig":{...}}'
 
 # 2. 启动运行（观察 SSE 流）
-curl -N -X POST http://localhost:3000/api/multi-agent/run \
+curl -N -X POST http://localhost:8000/api/multi-agent/run \
   -H "Content-Type: application/json" \
   -d '{"teamId":"xxx","input":"测试任务"}'
 
 # 3. 查询历史
-curl http://localhost:3000/api/multi-agent/runs
+curl http://localhost:8000/api/multi-agent/runs
 
 # 4. 查询详情
-curl http://localhost:3000/api/multi-agent/runs/[id]
+curl http://localhost:8000/api/multi-agent/runs/[id]
 ```
 
 ### 单元测试

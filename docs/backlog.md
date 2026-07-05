@@ -7,18 +7,17 @@
 
 ## 🔴 P0 高优先级
 
-### [BL-001] 健康检查端点
+### [BL-001] 健康检查端点 ✅ 已完成（M24）
 - **来源**：M22 工程化评估
 - **描述**：创建 `/api/health` 端点，返回 `{ status: "ok", version, timestamp }`
 - **价值**：Harness 部署必需，容器编排健康探针依赖
-- **预估**：0.5 天
+- **完成**：`src/app/api/health/route.ts`，含 DB 连接检查
 
-### [BL-002] Dockerfile HEALTHCHECK
+### [BL-002] Dockerfile HEALTHCHECK ✅ 已完成（M24）
 - **来源**：M22 工程化评估
 - **描述**：在 Dockerfile 中添加 `HEALTHCHECK` 指令，调用 /api/health
 - **价值**：容器编排自动检测服务状态
-- **依赖**：BL-001
-- **预估**：0.5 天
+- **完成**：`fly.toml` health check + `.dockerignore` 新建
 
 ### [BL-003] docker-compose.yml
 - **来源**：M22 工程化评估

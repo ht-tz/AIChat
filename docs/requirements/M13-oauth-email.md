@@ -214,7 +214,7 @@ AuthService（新增方法）
 
 **Mock 模式**（开发环境，未配置 SMTP）：
 - 不发送真实邮件
-- 在控制台输出验证链接：`[Mock Email] Verification URL: http://localhost:3000/api/auth/verify-email?token=xxx`
+- 在控制台输出验证链接：`[Mock Email] Verification URL: http://localhost:8000/api/auth/verify-email?token=xxx`
 - 通过环境变量 `EMAIL_MOCK=true` 或 SMTP 未配置时自动启用
 
 **SMTP 模式**（生产环境）：
@@ -245,7 +245,7 @@ EMAIL_MOCK=true        # 显式启用 Mock 模式
 TOKEN_ENCRYPTION_KEY=  # 32 字节 hex 字符串
 
 # 基础 URL（用于生成回调地址和邮件链接）
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
+NEXT_PUBLIC_BASE_URL=http://localhost:8000
 ```
 
 ## 6. 验收标准

@@ -148,7 +148,7 @@ NEXUS 的第一个里程碑目标，是**让一个能"打字机式聊起来"的 
 
 ## 9. 自测计划
 
-1. `pnpm dev` 启动 → 打开 http://localhost:3000
+1. `pnpm dev` 启动 → 打开 http://localhost:8000
 2. 输 "你好" → 看到流式欢迎语
 3. 输 "LRU 缓存" → 看到代码块 + 复杂度说明
 4. 输 "你好 React" → 看到 Next.js App Router 对比

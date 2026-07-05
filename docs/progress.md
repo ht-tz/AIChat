@@ -91,6 +91,43 @@
   - .env.local ✅ 未跟踪
   - GitHub 仓库 ✅ 可访问
 
+### ✅ M24 生产加固（安全审计 + 可靠性 + 持久化）- 完成
+- **时间**：下午
+- **做了什么**：
+  - **需求文档**：`docs/requirements/M24-production-hardening.md`
+  - **学习文档**：`docs/learning/M24-production-hardening.md`
+  - **P0 安全加固（6项）**：
+    - 启动环境变量强制校验：`src/lib/env-validation.ts`
+    - JWT Secret / 加密密钥硬编码回退移除
+    - 18 个 API 路由认证全覆盖（optionalAuth → requireAuth）
+    - PUT/DELETE 请求 Zod `.strict()` 校验
+    - 邮箱验证页 XSS 修复（escapeHtml）
+  - **P1 可靠性（6项）**：
+    - Mermaid XSS 修复（securityLevel: strict）
+    - 全局错误边界：error.tsx + not-found.tsx + loading.tsx
+    - 健康检查端点：`/api/health`（含 DB 连接检查）
+    - .dockerignore + fly.toml 优化（1GB 内存 + 健康检查）
+    - 全局限流中间件：Redis 适配层替代内存 Map
+    - 密码强度校验（8位+大小写+数字）+ 登录限流 + 账户锁定
+  - **P2 持久化+性能（5项）**：
+    - 结构化日志（pino）：13 个文件 console → logger，敏感字段脱敏
+    - 性能监控 DB 持久化：performance_records 表 + 50 条自动刷写
+    - Redis 适配层：CacheAdapter 接口 + Memory/Redis 双实现
+    - CSRF 双提交 Cookie 模式
+    - SSRF 防护（URL 白名单）
+  - **P3 质量提升（4项）**：
+    - 登录失败锁定（5次/15分钟）
+    - 类型安全（OpenAI Provider 8 处 as any 修正）
+    - Map 内存泄漏修复（定期清理 + 上限 100）
+    - 端口调整 3000 → 8000
+- **提交记录**：
+  - `43d4e1a` — 生产加固 P0+P1（31 文件，+1059/-203 行）
+  - `2c4c770` — 阶段三：日志+持久化+Redis
+  - 端口调整 3000→8000
+- **验证结果**：
+  - `pnpm typecheck` ✅ 0 error
+  - `pnpm test` ✅ 6 files / 34 tests passed
+
 ---
 ### ✅ M22 补充 — Claude Code Harness 最佳实践补齐
 - **时间**：下午

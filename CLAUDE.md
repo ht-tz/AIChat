@@ -14,10 +14,27 @@ NEXUS 是一个面向开发者的 AI Agent 学习项目，基于 Next.js 14 App 
 - **包管理**: pnpm (禁止使用 npm/yarn)
 
 ## 构建命令
-- `pnpm dev` — 开发服务器 (localhost:3000)
+- `pnpm dev` — 开发服务器 (localhost:8000)
 - `pnpm build` — 生产构建
 - `pnpm typecheck` — TypeScript 类型检查 (改完代码必须跑)
 - `pnpm test` — 运行测试
+
+### Logging
+
+```bash
+# 结构化日志（pino），自动脱敏敏感字段
+pnpm dev     # DEBUG 级别，控制台输出
+# 生产环境 INFO 级别，JSON 格式
+# 修改 LOG_LEVEL 环境变量可调整日志级别
+```
+
+### Redis（可选）
+
+```bash
+# 配置 REDIS_URL 启用 Redis（限流/OAuth 缓存）
+# 未配置时自动降级为内存模式
+REDIS_URL=redis://localhost:6379
+```
 - `pnpm lint` — ESLint 检查
 - `pnpm format` — Prettier 格式化
 - `pnpm db:push` — 数据库迁移
@@ -94,6 +111,7 @@ src/
 ## 禁止事项
 - 禁止使用 npm install / yarn install，只用 pnpm
 - 禁止直接修改 .env.local 文件内容
+- `CLAUDE.local.md` — 个人开发配置，不提交
 - 禁止删除数据库表或执行 DROP 语句
 - 禁止在客户端组件中导入服务端模块 (src/server/*)
 - 禁止使用 any 类型，除非有充分理由并加注释
@@ -108,6 +126,11 @@ src/
 - 需求文档: @docs/requirements/
 - 学习文档: @docs/learning/
 - 待办池: @docs/backlog.md
+- 结构化日志: @src/server/logger.ts
+- Redis 适配层: @src/server/redis/adapter.ts
+- 性能监控: @src/server/monitoring/performance.ts
+- 环境校验: @src/lib/env-validation.ts
+- 全局限流: @src/server/middleware/rate-limiter.ts
 
 ## .claude/ 引用
 - 自定义命令: @.claude/commands/review.md @.claude/commands/test.md
