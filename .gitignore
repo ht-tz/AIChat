@@ -16,3 +16,4 @@ CLAUDE.local.md
 
 # Harness.io 配置（误创建，已弃用）
 .harness/
+docs/.local-credentials.md
