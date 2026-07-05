@@ -1,6 +1,6 @@
 // 认证服务 —— 注册、登录、JWT、API 密钥、OAuth、邮箱验证
 
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
