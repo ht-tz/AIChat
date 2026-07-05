@@ -113,11 +113,11 @@ export async function POST(req: NextRequest) {
     attachments: m.attachments as Attachment[] | undefined,
   }));
 
-  let resolvedApiKey = body.apiKey;
-  let resolvedBaseUrl = body.baseUrl;
+  let resolvedApiKey = body.apiKey || process.env.OPENAI_API_KEY;
+  let resolvedBaseUrl = body.baseUrl || process.env.OPENAI_BASE_URL;
   let resolvedTemperature = body.temperature;
 
-  if (authCtx && !resolvedApiKey && body.model) {
+  if (authCtx && !body.apiKey && body.model) {
     try {
       const cfg = await modelConfigService.resolveConfig(authCtx.user.userId, body.model);
       if (cfg) {
