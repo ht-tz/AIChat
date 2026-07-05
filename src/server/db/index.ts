@@ -6,7 +6,11 @@ import postgres from "postgres";
 import * as schema from "./schema";
 import { logger } from "@/server/logger";
 
-const DATABASE_URL = process.env.DATABASE_URL;
+// 处理 Neon 等云数据库的 channel_binding 参数（postgres.js 不支持）
+const DATABASE_URL = process.env.DATABASE_URL?.replace(/[?&]channel_binding=require/, "").replace(
+  /\?$/,
+  "",
+);
 
 if (!DATABASE_URL) {
   // 不在 import 时崩溃；调用方拿到 null 自处理
