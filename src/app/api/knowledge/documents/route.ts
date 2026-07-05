@@ -28,7 +28,10 @@ const CreateSchema = z.object({
 export const GET = requireAuth(async (req, ctx) => {
   const startTime = Date.now();
   const ip = getClientIp(req);
-  const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/knowledge/documents");
+  const { allowed, headers: rateLimitHeaders } = await applyRateLimit(
+    ip,
+    "/api/knowledge/documents",
+  );
   if (!allowed) {
     return NextResponse.json(
       { error: "Rate limit exceeded" },
@@ -44,7 +47,10 @@ export const GET = requireAuth(async (req, ctx) => {
 export const POST = requireAuth(async (req, ctx) => {
   const startTime = Date.now();
   const ip = getClientIp(req);
-  const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/knowledge/documents");
+  const { allowed, headers: rateLimitHeaders } = await applyRateLimit(
+    ip,
+    "/api/knowledge/documents",
+  );
   if (!allowed) {
     return NextResponse.json(
       { error: "Rate limit exceeded" },
@@ -112,7 +118,10 @@ const UpdateDocSchema = z.object({
 export const PUT = requireAuth(async (req, ctx) => {
   const startTime = Date.now();
   const ip = getClientIp(req);
-  const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/knowledge/documents");
+  const { allowed, headers: rateLimitHeaders } = await applyRateLimit(
+    ip,
+    "/api/knowledge/documents",
+  );
   if (!allowed) {
     return NextResponse.json(
       { error: "Rate limit exceeded" },
@@ -153,7 +162,10 @@ const DeleteDocSchema = z.object({
 export const DELETE = requireAuth(async (req, ctx) => {
   const startTime = Date.now();
   const ip = getClientIp(req);
-  const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/knowledge/documents");
+  const { allowed, headers: rateLimitHeaders } = await applyRateLimit(
+    ip,
+    "/api/knowledge/documents",
+  );
   if (!allowed) {
     return NextResponse.json(
       { error: "Rate limit exceeded" },

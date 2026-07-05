@@ -1,13 +1,10 @@
 // API 限流中间件
 
+import { getCache } from "@/server/redis/adapter";
+
 export interface RateLimitConfig {
   maxRequests: number;
   windowMs: number;
-}
-
-export interface RateLimitState {
-  count: number;
-  resetTime: number;
 }
 
 const DEFAULT_CONFIG: RateLimitConfig = {
@@ -15,48 +12,38 @@ const DEFAULT_CONFIG: RateLimitConfig = {
   windowMs: 60000,
 };
 
-const limits: Map<string, RateLimitState> = new Map();
-
-function getKey(ip: string, path: string): string {
-  return `${ip}:${path}`;
-}
-
-export function checkRateLimit(
+export async function checkRateLimit(
   ip: string,
   path: string,
   config: RateLimitConfig = DEFAULT_CONFIG,
-): { allowed: boolean; remaining: number; resetTime: number } {
-  const key = getKey(ip, path);
+): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  const cache = getCache();
+  const key = `ratelimit:${ip}:${path}`;
   const now = Date.now();
+  const windowKey = `${key}:${Math.floor(now / config.windowMs)}`;
 
-  let state = limits.get(key);
+  const countStr = await cache.get(windowKey);
+  const count = parseInt(countStr || "0", 10) || 0;
+  const resetTime = Math.floor(now / config.windowMs) * config.windowMs + config.windowMs;
 
-  if (!state || now > state.resetTime) {
-    state = {
-      count: 0,
-      resetTime: now + config.windowMs,
-    };
-    limits.set(key, state);
-  }
-
-  const allowed = state.count < config.maxRequests;
+  const allowed = count < config.maxRequests;
   if (allowed) {
-    state.count++;
+    await cache.set(windowKey, String(count + 1), Math.ceil(config.windowMs / 1000));
   }
 
   return {
     allowed,
-    remaining: config.maxRequests - state.count,
-    resetTime: state.resetTime,
+    remaining: Math.max(0, config.maxRequests - count - (allowed ? 1 : 0)),
+    resetTime,
   };
 }
 
-export function applyRateLimit(
+export async function applyRateLimit(
   ip: string,
   path: string,
   config?: RateLimitConfig,
-): { allowed: boolean; headers: Record<string, string> } {
-  const result = checkRateLimit(ip, path, config);
+): Promise<{ allowed: boolean; headers: Record<string, string> }> {
+  const result = await checkRateLimit(ip, path, config);
 
   return {
     allowed: result.allowed,
@@ -67,26 +54,3 @@ export function applyRateLimit(
     },
   };
 }
-
-// 定期清理过期的限流条目（每 5 分钟）
-let cleanupInterval: ReturnType<typeof setInterval> | null = null;
-
-function startCleanup() {
-  if (cleanupInterval) return;
-  cleanupInterval = setInterval(
-    () => {
-      const now = Date.now();
-      for (const [key, state] of limits.entries()) {
-        if (now > state.resetTime) {
-          limits.delete(key);
-        }
-      }
-    },
-    5 * 60 * 1000,
-  );
-  // 不阻止进程退出
-  if (cleanupInterval.unref) cleanupInterval.unref();
-}
-
-// 模块加载时启动清理
-startCleanup();

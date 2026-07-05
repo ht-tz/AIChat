@@ -6,6 +6,7 @@
 import OpenAI from "openai";
 import type { LLMProvider } from "./index";
 import type { AgentStep, ToolDefinition, Attachment } from "@/lib/types";
+import { logger } from "@/server/logger";
 
 interface OpenAIConfig {
   baseURL: string;
@@ -219,7 +220,7 @@ export class OpenAIProvider implements LLMProvider {
         }
       }
     } catch (err) {
-      console.error("[OpenAIProvider] stream error:", err);
+      logger.error({ err }, "[OpenAIProvider] stream error");
       yield { kind: "error", message: extractErrorMessage(err) };
     }
   }

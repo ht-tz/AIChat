@@ -1,5 +1,8 @@
 // 性能监控服务
 
+import { db, schema } from "@/server/db";
+import { logger } from "@/server/logger";
+
 export interface PerformanceRecord {
   id: string;
   endpoint: string;
@@ -23,10 +26,32 @@ export interface PerformanceStats {
 }
 
 const MAX_RECORDS = 1000;
+const FLUSH_THRESHOLD = 50;
 const records: PerformanceRecord[] = [];
+const flushBuffer: PerformanceRecord[] = [];
 
 function generateId(): string {
   return `perf-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function persistToDb(records: PerformanceRecord[]): Promise<void> {
+  if (!db || records.length === 0) return;
+  try {
+    await db.insert(schema.performanceRecords).values(
+      records.map((r) => ({
+        path: r.endpoint,
+        method: r.method,
+        durationMs: r.duration,
+        statusCode: r.statusCode,
+        userId: null,
+        error: r.error || null,
+        timestamp: new Date(r.timestamp),
+      })),
+    );
+  } catch (err) {
+    // 不影响主流程
+    logger.error({ err }, "[performance] Failed to persist records");
+  }
 }
 
 export function recordPerformance(
@@ -51,6 +76,13 @@ export function recordPerformance(
   records.push(record);
   if (records.length > MAX_RECORDS) {
     records.shift();
+  }
+
+  // 自动刷写到数据库
+  flushBuffer.push(record);
+  if (flushBuffer.length >= FLUSH_THRESHOLD) {
+    const batch = flushBuffer.splice(0, flushBuffer.length);
+    persistToDb(batch);
   }
 }
 

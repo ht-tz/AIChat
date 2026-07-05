@@ -1,6 +1,7 @@
 // 邮箱验证服务 —— 支持 Mock 模式（控制台输出）和 SMTP 模式
 
 import { authService } from "./auth-service";
+import { logger } from "@/server/logger";
 
 const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587;
@@ -39,13 +40,13 @@ export class EmailService {
     }
 
     // Mock 模式：控制台输出
-    console.log("\n" + "=".repeat(60));
-    console.log(`[Email Service - Mock Mode]`);
-    console.log(`To: ${email}`);
-    console.log(`Subject: 验证您的邮箱 — NEXUS AI`);
-    console.log(`验证链接: ${verifyUrl}`);
-    console.log(`(15 分钟内有效)`);
-    console.log("=".repeat(60) + "\n");
+    logger.info("=".repeat(60));
+    logger.info("[Email Service - Mock Mode]");
+    logger.info({ email }, "[Email Service] sending");
+    logger.info("Subject: 验证您的邮箱 — NEXUS AI");
+    logger.info({ verifyUrl }, "验证链接");
+    logger.info("(15 分钟内有效)");
+    logger.info("=".repeat(60));
 
     sendCooldown.set(email, Date.now());
     return { success: true };
@@ -78,11 +79,11 @@ export class EmailService {
       nodemailer = require("nodemailer");
       if (!nodemailer?.createTransport) throw new Error("not installed");
     } catch {
-      console.log("\n" + "=".repeat(60));
-      console.log(`[Email Service - Fallback Mock (nodemailer unavailable)]`);
-      console.log(`To: ${email}`);
-      console.log(`验证链接: ${verifyUrl}`);
-      console.log("=".repeat(60) + "\n");
+      logger.info("=".repeat(60));
+      logger.info("[Email Service - Fallback Mock (nodemailer unavailable)]");
+      logger.info({ email }, "[Email Service] sending");
+      logger.info({ verifyUrl }, "验证链接");
+      logger.info("=".repeat(60));
       sendCooldown.set(email, Date.now());
       return { success: true };
     }

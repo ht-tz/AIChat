@@ -12,6 +12,7 @@ import type { AgentStep, PlanItem, ToolDefinition, Attachment } from "@/lib/type
 import { toolRegistry } from "@/server/tools";
 import { persistStep, startRun, finishRun } from "@/server/agent/persistence";
 import { injectMemories, extractAndSaveMemory } from "@/server/memory";
+import { logger } from "@/server/logger";
 
 export interface RunAgentOptions {
   messages: Array<{
@@ -48,7 +49,7 @@ export async function* runAgent(opts: RunAgentOptions): AsyncIterable<AgentStep>
         model: opts.model ?? "mock-default",
       });
     } catch (err) {
-      console.warn("[runAgent] failed to start DB run:", err);
+      logger.warn({ err }, "[runAgent] failed to start DB run");
     }
   }
   const runIdProp = runId ?? `mock-${nanoid(8)}`;
@@ -69,7 +70,7 @@ export async function* runAgent(opts: RunAgentOptions): AsyncIterable<AgentStep>
       try {
         await persistStep({ runId, stepIndex, step });
       } catch (err) {
-        console.warn("[runAgent] persistStep failed:", err);
+        logger.warn({ err }, "[runAgent] persistStep failed");
       }
     }
     return step;
@@ -96,7 +97,7 @@ export async function* runAgent(opts: RunAgentOptions): AsyncIterable<AgentStep>
           });
         }
       } catch (err) {
-        console.warn("[runAgent] memory injection failed:", err);
+        logger.warn({ err }, "[runAgent] memory injection failed");
       }
     }
   }
@@ -209,7 +210,7 @@ export async function* runAgent(opts: RunAgentOptions): AsyncIterable<AgentStep>
         completionTokens,
       });
     } catch (err) {
-      console.warn("[runAgent] finishRun failed:", err);
+      logger.warn({ err }, "[runAgent] finishRun failed");
     }
   }
 
@@ -217,7 +218,7 @@ export async function* runAgent(opts: RunAgentOptions): AsyncIterable<AgentStep>
     try {
       await extractAndSaveMemory(opts.dbSessionId, opts.messages);
     } catch (err) {
-      console.warn("[runAgent] extractAndSaveMemory failed:", err);
+      logger.warn({ err }, "[runAgent] extractAndSaveMemory failed");
     }
   }
 

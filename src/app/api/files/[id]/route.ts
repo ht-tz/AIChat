@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/server/db";
 import { files } from "@/server/db/schema";
 import { optionalAuth } from "@/server/auth";
+import { logger } from "@/server/logger";
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   const authCtx = await optionalAuth(request);
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         },
       });
     } catch (fsError) {
-      console.error("[files] read error:", fsError);
+      logger.error({ err: fsError }, "[files] read error");
       return NextResponse.json(
         {
           id: fileRecord.id,
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       );
     }
   } catch (error) {
-    console.error("[files] error:", error);
+    logger.error({ err: error }, "[files] error");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to get file" },
       { status: 500 },

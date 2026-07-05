@@ -1,3 +1,5 @@
+import { logger } from "@/server/logger";
+
 // 启动时环境变量校验 — 生产环境必须配置关键变量
 
 const REQUIRED_VARS = ["DATABASE_URL", "JWT_SECRET", "ENCRYPTION_KEY"] as const;
@@ -15,10 +17,10 @@ export function validateEnv(): void {
   if (missing.length > 0) {
     const msg = `[env] Missing required environment variables: ${missing.join(", ")}`;
     if (isProd) {
-      console.error(msg);
+      logger.error(msg);
       process.exit(1);
     } else {
-      console.warn(`${msg} — using development defaults`);
+      logger.warn({ msg }, "using development defaults");
     }
   }
 
@@ -27,10 +29,10 @@ export function validateEnv(): void {
   if (jwtSecret && jwtSecret.length < 32) {
     const msg = "[env] JWT_SECRET must be at least 32 characters";
     if (isProd) {
-      console.error(msg);
+      logger.error(msg);
       process.exit(1);
     } else {
-      console.warn(msg);
+      logger.warn(msg);
     }
   }
 
@@ -38,10 +40,10 @@ export function validateEnv(): void {
   if (encKey && encKey.length < 32) {
     const msg = "[env] ENCRYPTION_KEY must be at least 32 characters";
     if (isProd) {
-      console.error(msg);
+      logger.error(msg);
       process.exit(1);
     } else {
-      console.warn(msg);
+      logger.warn(msg);
     }
   }
 }

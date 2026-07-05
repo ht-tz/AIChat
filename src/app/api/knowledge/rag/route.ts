@@ -1,11 +1,11 @@
-// RAG 问答 API
+// RAG API
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { ragService } from "@/server/knowledge";
 import { applyRateLimit, validateText } from "@/server/middleware";
 import { recordPerformance } from "@/server/monitoring/performance";
-import { optionalAuth } from "@/server/auth";
+import { optionalAuth } from "@/server/auth/auth-middleware";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,15 +20,15 @@ function getClientIp(req: NextRequest): string {
 
 const BodySchema = z.object({
   query: z.string().min(1),
-  limit: z.number().min(1).max(10).default(5),
-  minSimilarity: z.number().min(0).max(1).default(0.15),
+  limit: z.number().int().positive().optional(),
+  minSimilarity: z.number().min(0).max(1).optional(),
 });
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   const authCtx = await optionalAuth(req);
   const ip = getClientIp(req);
-  const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/knowledge/rag");
+  const { allowed, headers: rateLimitHeaders } = await applyRateLimit(ip, "/api/knowledge/rag");
   if (!allowed) {
     return NextResponse.json(
       { error: "Rate limit exceeded" },

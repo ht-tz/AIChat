@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { oauthService, authService, type OAuthProvider } from "@/server/auth";
+import { logger } from "@/server/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
     return response;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[OAuth callback] error:", msg);
+    logger.error({ err: msg }, "[OAuth callback] error");
     return NextResponse.redirect(new URL(`/auth?error=${encodeURIComponent(msg)}`, req.url));
   }
 }

@@ -1,6 +1,7 @@
 // OpenAI 兼容 Embedding 提供者
 
 import type { Embedding } from "@/server/memory";
+import { logger } from "@/server/logger";
 
 export interface OpenAIEmbeddingConfig {
   baseUrl: string;
@@ -38,7 +39,7 @@ export class OpenAICompatibleEmbedding {
       const data = await response.json();
       return data.data[0].embedding as number[];
     } catch (error) {
-      console.warn("OpenAI Embedding failed, falling back to mock:", error);
+      logger.warn({ err: error }, "OpenAI Embedding failed, falling back to mock");
       return this.mockEmbed(text);
     }
   }

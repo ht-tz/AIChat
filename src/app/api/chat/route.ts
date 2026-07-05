@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now();
   const authCtx = await optionalAuth(req);
   const ip = getClientIp(req);
-  const { allowed, headers: rateLimitHeaders } = applyRateLimit(ip, "/api/chat");
+  const { allowed, headers: rateLimitHeaders } = await applyRateLimit(ip, "/api/chat");
   if (!allowed) {
     return new Response(JSON.stringify({ error: "Rate limit exceeded", message: "请稍后再试" }), {
       status: 429,

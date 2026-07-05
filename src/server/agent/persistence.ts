@@ -15,6 +15,7 @@ import {
   type PlanItem,
 } from "@/server/db/schema";
 import type { AgentStep } from "@/lib/types";
+import { logger } from "@/server/logger";
 
 /** 自动 upsert session（保证 agent_runs.sessionId 外键不报） */
 async function ensureSession(sessionId: string) {
@@ -32,7 +33,7 @@ async function ensureSession(sessionId: string) {
       });
     }
   } catch (err) {
-    console.warn("[persistence] ensureSession failed:", (err as Error).message);
+    logger.warn({ err: (err as Error).message }, "[persistence] ensureSession failed");
   }
 }
 
@@ -57,7 +58,7 @@ export async function startRun(opts: {
       .returning({ id: agentRuns.id });
     return row?.id ?? null;
   } catch (err) {
-    console.warn("[persistence] startRun failed:", (err as Error).message);
+    logger.warn({ err: (err as Error).message }, "[persistence] startRun failed");
     return null;
   }
 }
@@ -146,7 +147,7 @@ export async function persistStep(opts: {
       } as NewAgentStep);
     }
   } catch (err) {
-    console.warn("[persistence] persistStep failed:", (err as Error).message);
+    logger.warn({ err: (err as Error).message }, "[persistence] persistStep failed");
   }
 }
 
@@ -177,6 +178,6 @@ export async function finishRun(opts: {
       })
       .where(eq(agentRuns.id, opts.runId));
   } catch (err) {
-    console.warn("[persistence] finishRun failed:", (err as Error).message);
+    logger.warn({ err: (err as Error).message }, "[persistence] finishRun failed");
   }
 }

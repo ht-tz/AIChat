@@ -4,13 +4,14 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
+import { logger } from "@/server/logger";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
   // 不在 import 时崩溃；调用方拿到 null 自处理
   // 这样开发期不需要 DB 也能跑
-  console.warn("[db] DATABASE_URL not set, database features disabled");
+  logger.warn("[db] DATABASE_URL not set, database features disabled");
 }
 
 /** 全局单例 client（避免 dev hot reload 多连接） */

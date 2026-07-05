@@ -14,6 +14,7 @@ import {
   boolean,
   index,
   pgEnum,
+  serial,
 } from "drizzle-orm/pg-core";
 
 /* -------------------------------------------------------------------------- */
@@ -740,3 +741,24 @@ export const modelConfigs = pgTable(
 
 export type ModelConfig = typeof modelConfigs.$inferSelect;
 export type NewModelConfig = typeof modelConfigs.$inferInsert;
+
+/* -------------------------------------------------------------------------- */
+/* 性能监控记录 (性能持久化)                                                     */
+/* -------------------------------------------------------------------------- */
+
+export const performanceRecords = pgTable(
+  "performance_records",
+  {
+    id: serial("id").primaryKey(),
+    path: text("path").notNull(),
+    method: varchar("method", { length: 10 }).notNull(),
+    durationMs: integer("duration_ms").notNull(),
+    statusCode: integer("status_code").notNull(),
+    userId: text("user_id"),
+    error: text("error"),
+    timestamp: timestamp("timestamp").defaultNow().notNull(),
+  },
+  (t) => ({
+    timestampIdx: index("perf_records_timestamp_idx").on(t.timestamp),
+  }),
+);

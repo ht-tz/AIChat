@@ -5,6 +5,7 @@ import path from "path";
 import { db } from "@/server/db";
 import { files } from "@/server/db/schema";
 import { optionalAuth } from "@/server/auth";
+import { logger } from "@/server/logger";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
       fileType,
     });
   } catch (error) {
-    console.error("[upload] error:", error);
+    logger.error({ err: error }, "[upload] error");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Upload failed" },
       { status: 500 },

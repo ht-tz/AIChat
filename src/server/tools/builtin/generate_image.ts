@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { Tool } from "../types";
 import { db } from "@/server/db";
 import { images } from "@/server/db/schema";
+import { logger } from "@/server/logger";
 
 const Params = z.object({
   prompt: z.string().min(1).describe("图片生成提示词"),
@@ -80,7 +81,7 @@ export const generateImageTool: Tool<typeof Params> = {
           durationMs,
         });
       } catch (err) {
-        console.warn("[generate_image] failed to persist:", err);
+        logger.warn({ err }, "[generate_image] failed to persist");
       }
     }
 
